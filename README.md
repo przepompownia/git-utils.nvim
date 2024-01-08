@@ -1,1 +1,1 @@
-# git-utils.lua
+# git-utils.nvim
