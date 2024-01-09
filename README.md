@@ -1,6 +1,6 @@
 # git-utils.nvim
 
-- open `git commit` dialog without using nested nvim instance and tools like [flatten.nvim](https://github.com/willothy/flatten.nvim):
+- open `git commit` dialog without using nested nvim instance and tools like [flatten.nvim](https://github.com/willothy/flatten.nvim) (and while [`--remote-wait` is not implemented](https://github.com/neovim/neovim/issues/24788):
 ```lua
 require('git-utils.commit')()
 require('git-utils.commit')({gitDir = vim.uv.cwd()})
