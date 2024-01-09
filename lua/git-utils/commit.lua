@@ -1,9 +1,4 @@
-local function tryCommit(messageBuffer, gitDir)
-  if not vim.api.nvim_buf_is_valid(messageBuffer) then
-    vim.notify('Invalid message buffer', vim.log.levels.ERROR, {title = 'git commit'})
-    return
-  end
-
+local function parseMessageBuffer(messageBuffer)
   local messageIt = vim.iter(vim.api.nvim_buf_get_lines(messageBuffer, 0, -1, true))
     :filter(function (line)
       return not vim.startswith(line, '#')
@@ -13,8 +8,16 @@ local function tryCommit(messageBuffer, gitDir)
     messageIt:next()
   end
 
-  local title = messageIt:next()
-  local description = messageIt:join('\n')
+  return messageIt:next(), messageIt:join('\n')
+end
+
+local function tryCommit(messageBuffer, gitDir)
+  if not vim.api.nvim_buf_is_valid(messageBuffer) then
+    vim.notify('Invalid message buffer', vim.log.levels.ERROR, {title = 'git commit'})
+    return
+  end
+
+  local title, description = parseMessageBuffer(messageBuffer)
 
   if nil == title then
     vim.notify('Cannot commit with empty message', vim.log.levels.ERROR, {title = 'git commit'})
