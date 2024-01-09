@@ -34,6 +34,10 @@ local function tryCommit(messageBuffer, gitDir)
       if #obj.stdout > 0 then
         vim.notify(obj.stdout, vim.log.levels.INFO, {title = 'git commit'})
       end
+
+      if obj.code ~= 0 then
+        return
+      end
       vim.api.nvim_buf_delete(messageBuffer, {force = true})
     end)
   )
