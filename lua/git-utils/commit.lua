@@ -1,3 +1,11 @@
+local function notify(msg, level)
+  vim.notify(msg, level, {title = 'git commit'})
+end
+
+local function notifyError(msg)
+  notify(msg, vim.log.levels.ERROR)
+end
+
 local function parseMessageBuffer(messageBuffer)
   local messageIt = vim.iter(vim.api.nvim_buf_get_lines(messageBuffer, 0, -1, true))
     :filter(function (line)
@@ -13,14 +21,14 @@ end
 
 local function tryCommit(messageBuffer, gitDir)
   if not vim.api.nvim_buf_is_valid(messageBuffer) then
-    vim.notify('Invalid message buffer', vim.log.levels.ERROR, {title = 'git commit'})
+    notifyError('Invalid message buffer')
     return
   end
 
   local title, description = parseMessageBuffer(messageBuffer)
 
   if nil == title then
-    vim.notify('Cannot commit with empty message', vim.log.levels.ERROR, {title = 'git commit'})
+    notifyError('Cannot commit with empty message')
     return
   end
 
@@ -29,10 +37,10 @@ local function tryCommit(messageBuffer, gitDir)
     {text = true, cwd = gitDir},
     vim.schedule_wrap(function (obj)
       if #obj.stderr > 0 then
-        vim.notify(obj.stderr, vim.log.levels.ERROR, {title = 'git commit'})
+        notifyError(obj.stderr)
       end
       if #obj.stdout > 0 then
-        vim.notify(obj.stdout, vim.log.levels.INFO, {title = 'git commit'})
+        notify(obj.stdout, vim.log.levels.INFO)
       end
 
       if obj.code ~= 0 then
