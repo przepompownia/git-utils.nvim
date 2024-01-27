@@ -1,5 +1,5 @@
 local function notify(msg, level)
-  vim.notify(msg, level, {title = 'git commit'})
+  vim.notify(vim.trim(msg), level, {title = 'git commit'})
 end
 
 local function notifyError(msg)
@@ -29,7 +29,7 @@ local function tryCommit(messageBuffer, gitDir)
 
   if nil == title then
     notifyError('Cannot commit with empty message')
-    return
+    return false
   end
 
   vim.system(
@@ -51,43 +51,82 @@ local function tryCommit(messageBuffer, gitDir)
   )
 end
 
-local function displayCommitMessage(content, gitDir, confirmKey)
-  local messageBuffer = vim.api.nvim_create_buf(false, true)
+local function absoluteGitDir(gitDir)
+  local cmdResult = vim.system({'git', 'rev-parse', '--absolute-git-dir'}, {cwd = gitDir}):wait()
+  if cmdResult.code ~= 0 then
+    notifyError('Cannot find git dir here: ' .. cmdResult.stderr)
+  end
 
-  confirmKey = confirmKey or '<C-CR>'
+  return vim.trim(cmdResult.stdout)
+end
 
-  vim.keymap.set({'n', 'i'}, confirmKey, function ()
-    tryCommit(messageBuffer, gitDir)
-  end, {buffer = messageBuffer})
+local function getCommitMessagePath(gitDir)
+  return vim.fs.joinpath(absoluteGitDir(gitDir), 'COMMIT_EDITMSG')
+end
 
-  local lines = vim.split(content, '\n')
-  local msgTemplate = '# Use %s (in insert and normal mode) to confirm the message and wipe this buffer.'
+local function displayCommitMessage(gitDir, confirmKey, content)
+  local commitMessagePath = getCommitMessagePath(gitDir)
+  local messageBuffer = vim.fn.bufadd(commitMessagePath)
 
-  table.insert(lines, 2, (msgTemplate):format(confirmKey))
-
-  vim.api.nvim_buf_set_lines(messageBuffer, 0, #lines, false, lines)
-  vim.bo[messageBuffer].filetype = 'gitcommit'
-  vim.bo[messageBuffer].bufhidden = 'wipe'
+  vim.api.nvim_create_autocmd('BufDelete', {
+    buffer = messageBuffer,
+    callback = function ()
+      tryCommit(messageBuffer, gitDir)
+    end,
+  })
+  -- local messageBuffer = vim.api.nvim_create_buf(false, true)
+  --
+  -- confirmKey = confirmKey or '<C-CR>'
+  --
+  -- vim.keymap.set({'n', 'i'}, confirmKey, function ()
+  --   tryCommit(messageBuffer, gitDir)
+  -- end, {buffer = messageBuffer})
+  --
+  -- local lines = vim.split(content, '\n')
+  -- local msgTemplate = '# Use %s (in insert and normal mode) to confirm the message and wipe this buffer.'
+  --
+  -- table.insert(lines, 2, (msgTemplate):format(confirmKey))
+  --
+  -- vim.api.nvim_buf_set_lines(messageBuffer, 0, #lines, false, lines)
+  -- vim.bo[messageBuffer].filetype = 'gitcommit'
+  -- vim.bo[messageBuffer].bufhidden = 'wipe'
 
   vim.cmd.sbuffer({args = {messageBuffer}, mods = {split = 'botright'}})
+  vim.cmd.edit()
+
+  if content.title then
+    vim.api.nvim_buf_set_lines(messageBuffer, 0, 1, false, {content.title})
+  end
+
+  if #vim.trim(content.description) > 0 then
+    local description = vim.split(content.description, '\n')
+    vim.api.nvim_buf_set_lines(messageBuffer, 1, #description, false, description)
+  end
+
+  vim.api.nvim_win_set_cursor(0, {1, 0})
 end
 
 local function prepareCommitView(opts)
   opts = opts or {}
-  local cwd = opts.gitDir or vim.uv.cwd()
+  local gitDir = opts.gitDir or vim.uv.cwd()
+
+  local commitMessagePath = getCommitMessagePath(gitDir)
+  local oldMessageBuffer = vim.fn.bufadd(commitMessagePath)
+  local title, description = parseMessageBuffer(oldMessageBuffer)
+
   vim.system(
     {'git', 'commit'},
     {
       text = true,
       env = {GIT_EDITOR = 'cat'},
-      cwd = cwd,
+      cwd = gitDir,
     },
     vim.schedule_wrap(function (obj)
       if 0 == #vim.trim(obj.stderr) then
         vim.print('Nothing to commit yet')
         return
       end
-      displayCommitMessage(obj.stdout, cwd, opts.confirmKey)
+      displayCommitMessage(gitDir, opts.confirmKey, {title = title, description = description})
     end)
   )
 end
