@@ -68,28 +68,19 @@ local function displayCommitMessage(gitDir, confirmKey, content)
   local commitMessagePath = getCommitMessagePath(gitDir)
   local messageBuffer = vim.fn.bufadd(commitMessagePath)
 
-  vim.api.nvim_create_autocmd('BufDelete', {
+  local bufDelete = vim.api.nvim_create_autocmd('BufDelete', {
     buffer = messageBuffer,
     callback = function ()
       tryCommit(messageBuffer, gitDir)
     end,
   })
-  -- local messageBuffer = vim.api.nvim_create_buf(false, true)
-  --
-  -- confirmKey = confirmKey or '<C-CR>'
-  --
-  -- vim.keymap.set({'n', 'i'}, confirmKey, function ()
-  --   tryCommit(messageBuffer, gitDir)
-  -- end, {buffer = messageBuffer})
-  --
-  -- local lines = vim.split(content, '\n')
-  -- local msgTemplate = '# Use %s (in insert and normal mode) to confirm the message and wipe this buffer.'
-  --
-  -- table.insert(lines, 2, (msgTemplate):format(confirmKey))
-  --
-  -- vim.api.nvim_buf_set_lines(messageBuffer, 0, #lines, false, lines)
-  -- vim.bo[messageBuffer].filetype = 'gitcommit'
-  -- vim.bo[messageBuffer].bufhidden = 'wipe'
+
+  confirmKey = confirmKey or '<C-CR>'
+
+  vim.keymap.set({'n', 'i'}, confirmKey, function ()
+    vim.api.nvim_del_autocmd(bufDelete)
+    tryCommit(messageBuffer, gitDir)
+  end, {buffer = messageBuffer})
 
   vim.cmd.sbuffer({args = {messageBuffer}, mods = {split = 'botright'}})
   vim.cmd.edit()
