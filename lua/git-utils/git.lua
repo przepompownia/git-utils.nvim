@@ -211,4 +211,20 @@ function git.matchBranchesToRange(topDir, range)
   return result
 end
 
+function git.switchToBranch(branch, cwd, _noHooks)
+  local cmd = {'git', '-c', 'core.hooksPath=', 'switch', branch}
+  local _stdout, exitCode, stderr = require('telescope.utils').get_os_command_output(cmd, cwd)
+
+  if {} ~= stderr then
+    vim.notify(table.concat(stderr, '\n'), vim.log.levels.INFO, {title = 'git switch'})
+  end
+
+  if 0 ~= exitCode then
+    return
+  end
+  vim.schedule(function ()
+    vim.api.nvim_cmd({cmd = 'checktime'}, {})
+  end)
+end
+
 return git
