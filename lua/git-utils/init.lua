@@ -19,6 +19,10 @@ local defaultOpts = {
   currentBufferDirectory = GitUtils.currentBufferDirectory,
 }
 
+local function top()
+  return require('git-utils.git').top(GitUtils.currentBufferDirectory())
+end
+
 --- @param opts git-utils.defaultOpts
 local function createCommands(opts)
   vim.api.nvim_create_user_command(
@@ -26,7 +30,7 @@ local function createCommands(opts)
     function (cmdOpts)
       require('git-utils.telescope.gdiff').run({
         args = cmdOpts.fargs,
-        cwd = require('git-utils.git').top(opts.currentBufferDirectory()),
+        cwd = top(),
         attach_mappings = opts.telescopeAttachMappings,
       })
     end,
@@ -34,10 +38,14 @@ local function createCommands(opts)
       nargs = '*',
       complete = function (argLead, _, _)
         local git = require('git-utils.git')
-        return git.matchBranchesToRange(git.top(opts.currentBufferDirectory()), argLead)
+        return git.matchBranchesToRange(top(), argLead)
       end,
     }
   )
+end
+
+function GitUtils.branches(opts)
+  require('git-utils.telescope.branches').list(vim.tbl_deep_extend('keep', opts or {}, {cwd = top()}))
 end
 
 --- @param opts git-utils.defaultOpts

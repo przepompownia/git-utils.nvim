@@ -43,7 +43,8 @@ require 'git-utils.git'.pushToAllRemoteRepos(require('git-utils').currentBufferD
 
 ### Branches
 ```lua
-require('git-utils.telescope.branches').list({cwd = require('git-utils').currentBufferDirectory()})
+require('git-utils').branches()
+require('git-utils').branches({cwd = require('git-utils').currentBufferDirectory()})
 ```
 ```vim
 :Telescope git_utils branches
