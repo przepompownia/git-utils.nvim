@@ -26,9 +26,15 @@ local function system(command, opts)
 end
 
 function git.top(relativeDir)
-  local out = system({'git', 'rev-parse', '--show-toplevel'}, {cwd = relativeDir})
+  local out = vim.system({'git', 'rev-parse', '--show-toplevel'}, {cwd = relativeDir}):wait()
 
-  return #out > 0 and out[1] or relativeDir
+  if out.code > 0 then
+    vim.notify(('Cannot determine top level directory for %s'):format(relativeDir), vim.log.levels.WARN, {title = 'git'})
+
+    return relativeDir
+  end
+
+  return vim.trim(out.stdout)
 end
 
 function git.remote(relativeDir, gitRemoteOpts)
