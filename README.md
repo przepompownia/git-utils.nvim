@@ -49,6 +49,7 @@ require('git-utils').branches({cwd = require('git-utils').currentBufferDirectory
 ```vim
 :Telescope git_utils branches
 ```
+There is a [lualine](https://github.com/nvim-lualine/lualine.nvim) component `git-utils-branch`. It extends its builtin `branch` component. Currently it only adds mouse right click action that runs the above method. 
 
 # Setup
 ```lua
