@@ -72,6 +72,7 @@ function git.push(relativeDir, remoteRepo)
       cwd = relativeDir,
       stdout = insertOutput(stdout),
       stderr = insertOutput(stderr),
+      detach = true,
     },
     function (obj)
       if 0 < obj.code then
