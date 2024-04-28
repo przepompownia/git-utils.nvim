@@ -82,9 +82,6 @@ local function displayCommitMessage(gitDir, confirmKey, content)
     tryCommit(messageBuffer, gitDir)
   end, {buffer = messageBuffer})
 
-  vim.cmd.sbuffer({args = {messageBuffer}, mods = {split = 'botright'}})
-  vim.cmd.edit()
-
   if content.title then
     vim.api.nvim_buf_set_lines(messageBuffer, 0, 1, false, {content.title})
   end
@@ -94,7 +91,20 @@ local function displayCommitMessage(gitDir, confirmKey, content)
     vim.api.nvim_buf_set_lines(messageBuffer, 1, #description, false, description)
   end
 
-  vim.api.nvim_win_set_cursor(0, {1, 0})
+  vim.api.nvim_open_win(messageBuffer, true, {
+    relative = 'editor',
+    width = vim.go.columns,
+    height = math.min(20, vim.go.lines / 2),
+    anchor = 'SE',
+    row = vim.go.lines - 1,
+    col = 0,
+    border = 'single',
+    style = 'minimal',
+    title = 'Git Commit',
+    title_pos = 'center',
+  })
+
+  vim.cmd.edit()
 end
 
 local function prepareCommitView(opts)
