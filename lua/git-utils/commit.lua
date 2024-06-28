@@ -94,7 +94,7 @@ local function displayCommitMessage(gitDir, confirmKey, content)
   vim.api.nvim_open_win(messageBuffer, true, {
     relative = 'editor',
     width = vim.go.columns,
-    height = math.min(20, vim.go.lines / 2),
+    height = math.floor(math.min(20, vim.go.lines / 2)),
     anchor = 'SE',
     row = vim.go.lines - 1,
     col = 0,
