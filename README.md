@@ -29,7 +29,7 @@ require'telescope'.extensions.git_utils.grep_git_diff({args = {'master...HEAD'}}
 ```vim
 :Telescope git_utils grep_git_diff args=master...HEAD
 ```
-or (if enabled `createCommands`)
+or (if called `require('git-utils.createCommands')()`)
 ```vim
 :GDiff master...HEAD
 ```
@@ -59,7 +59,6 @@ where default opts are:
 ```lua
 --- @class git-utils.defaultOpts
 local defaultOpts = {
-  createCommands = false, -- if true define GDiff command
   registerTelescopeExtension = false,
   telescopeAttachMappings = nil, --- @type fun(promptBuffer: string, map: fun()): boolean?
   currentBufferDirectory = require('git-utils').currentBufferDirectory, -- function used to return the directory of the current buffer to determine git dir

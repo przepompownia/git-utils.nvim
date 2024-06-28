@@ -11,61 +11,42 @@ function GitUtils.currentBufferDirectory()
   return vim.fs.dirname(fileDir)
 end
 
---- @class git-utils.defaultOpts
+--- @class git-utils.config
 local defaultOpts = {
-  createCommands = false,
   registerTelescopeExtension = false,
   telescopeAttachMappings = nil, --- @type fun(promptBuffer: string, map: fun()): boolean?
   currentBufferDirectory = GitUtils.currentBufferDirectory,
 }
 
+local config = nil
+
 local function top()
   return require('git-utils.git').top(GitUtils.currentBufferDirectory())
-end
-
---- @param opts git-utils.defaultOpts
-local function createCommands(opts)
-  vim.api.nvim_create_user_command(
-    'GDiff',
-    function (cmdOpts)
-      require('git-utils.telescope.gdiff').run({
-        args = cmdOpts.fargs,
-        cwd = top(),
-        attach_mappings = opts.telescopeAttachMappings,
-      })
-    end,
-    {
-      nargs = '*',
-      complete = function (argLead, _, _)
-        local git = require('git-utils.git')
-        return git.matchBranchesToRange(top(), argLead)
-      end,
-    }
-  )
 end
 
 function GitUtils.branches(opts)
   require('git-utils.telescope.branches').list(vim.tbl_deep_extend('keep', opts or {}, {cwd = top()}))
 end
 
---- @param opts git-utils.defaultOpts
+--- @param opts git-utils.config
 function GitUtils.setup(opts)
   vim.validate({opts = {opts, 'table', false}})
 
-  --- @type git-utils.defaultOpts
-  opts = vim.tbl_extend('keep', opts, defaultOpts)
+  --- @type git-utils.config
+  config = vim.tbl_extend('keep', opts, defaultOpts)
 
   if opts.currentBufferDirectory and type(opts.currentBufferDirectory) == 'function' then
     GitUtils.currentBufferDirectory = opts.currentBufferDirectory
   end
 
-  if opts.createCommands then
-    createCommands(opts)
-  end
-
   if opts.registerTelescopeExtension then
     require('telescope').load_extension('git_utils')
   end
+end
+
+--- @return git-utils.config
+function GitUtils.config()
+  return config or defaultOpts
 end
 
 return GitUtils
