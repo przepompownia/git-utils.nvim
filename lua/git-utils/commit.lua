@@ -75,7 +75,7 @@ local function displayCommitMessage(gitDir, confirmKey, content)
     end,
   })
 
-  confirmKey = confirmKey or '<C-CR>'
+  confirmKey = confirmKey or '<A-CR>'
 
   vim.keymap.set({'n', 'i'}, confirmKey, function ()
     vim.api.nvim_del_autocmd(bufDelete)
