@@ -104,6 +104,7 @@ local function displayCommitMessage(gitDir, confirmKey, content)
     title_pos = 'center',
   })
 
+  vim.cmd.normal('gg')
   vim.cmd.edit()
 end
 
