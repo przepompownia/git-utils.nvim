@@ -1,3 +1,5 @@
+local api = vim.api
+
 local function notify(msg, level)
   vim.notify(vim.trim(msg), level, {title = 'git commit'})
 end
@@ -7,7 +9,7 @@ local function notifyError(msg)
 end
 
 local function parseMessageBuffer(messageBuffer)
-  local messageIt = vim.iter(vim.api.nvim_buf_get_lines(messageBuffer, 0, -1, true))
+  local messageIt = vim.iter(api.nvim_buf_get_lines(messageBuffer, 0, -1, true))
     :filter(function (line)
       return not vim.startswith(line, '#')
     end)
@@ -20,7 +22,7 @@ local function parseMessageBuffer(messageBuffer)
 end
 
 local function tryCommit(messageBuffer, gitDir)
-  if not vim.api.nvim_buf_is_valid(messageBuffer) then
+  if not api.nvim_buf_is_valid(messageBuffer) then
     notifyError('Invalid message buffer')
     return
   end
@@ -46,7 +48,7 @@ local function tryCommit(messageBuffer, gitDir)
       if obj.code ~= 0 then
         return
       end
-      vim.api.nvim_buf_delete(messageBuffer, {force = true})
+      api.nvim_buf_delete(messageBuffer, {force = true})
     end)
   )
 end
@@ -68,7 +70,7 @@ local function displayCommitMessage(gitDir, confirmKey, content)
   local commitMessagePath = getCommitMessagePath(gitDir)
   local messageBuffer = vim.fn.bufadd(commitMessagePath)
 
-  local bufDelete = vim.api.nvim_create_autocmd('BufDelete', {
+  local bufDelete = api.nvim_create_autocmd('BufDelete', {
     buffer = messageBuffer,
     callback = function ()
       tryCommit(messageBuffer, gitDir)
@@ -78,20 +80,20 @@ local function displayCommitMessage(gitDir, confirmKey, content)
   confirmKey = confirmKey or '<A-CR>'
 
   vim.keymap.set({'n', 'i'}, confirmKey, function ()
-    vim.api.nvim_del_autocmd(bufDelete)
+    api.nvim_del_autocmd(bufDelete)
     tryCommit(messageBuffer, gitDir)
   end, {buffer = messageBuffer})
 
   if content.title then
-    vim.api.nvim_buf_set_lines(messageBuffer, 0, 1, false, {content.title})
+    api.nvim_buf_set_lines(messageBuffer, 0, 1, false, {content.title})
   end
 
   if #vim.trim(content.description) > 0 then
     local description = vim.split(content.description, '\n')
-    vim.api.nvim_buf_set_lines(messageBuffer, 1, #description, false, description)
+    api.nvim_buf_set_lines(messageBuffer, 1, #description, false, description)
   end
 
-  vim.api.nvim_open_win(messageBuffer, true, {
+  api.nvim_open_win(messageBuffer, true, {
     relative = 'editor',
     width = vim.go.columns,
     height = math.floor(math.min(20, vim.go.lines / 2)),
