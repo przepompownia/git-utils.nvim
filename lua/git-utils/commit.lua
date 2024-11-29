@@ -61,7 +61,9 @@ local function tryCommit(messageBuffer, opts)
       if obj.code ~= 0 then
         return
       end
-      api.nvim_buf_delete(messageBuffer, {force = true})
+      if api.nvim_buf_is_valid(messageBuffer) then
+        api.nvim_buf_delete(messageBuffer, {force = true})
+      end
     end)
   )
 end
