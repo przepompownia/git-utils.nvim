@@ -8,6 +8,7 @@ Utils moved from https://github.com/przepompownia/nvim-arctgx
 require('git-utils.commit')()
 require('git-utils.commit')({gitDir = vim.uv.cwd()})
 require('git-utils.commit')({gitDir = vim.uv.cwd(), confirmKey = '<A-CR>'}) -- default values
+require('git-utils.commit')({gitDir = vim.uv.cwd(), amend = true})
 ```
 
 Use `confirmKey` to override the mapping inside message buffer. 

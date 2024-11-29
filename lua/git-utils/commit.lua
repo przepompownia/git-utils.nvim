@@ -1,5 +1,7 @@
 local api = vim.api
 
+--- @alias git-utils.commit.opts {confirmKey: string, gitDir: string, amend: boolean, resetAuthor: boolean}
+
 local function notify(msg, level)
   vim.notify(vim.trim(msg), level, {title = 'git commit'})
 end
@@ -21,7 +23,8 @@ local function parseMessageBuffer(messageBuffer)
   return messageIt:next(), messageIt:join('\n')
 end
 
-local function tryCommit(messageBuffer, gitDir)
+---@param opts git-utils.commit.opts
+local function tryCommit(messageBuffer, opts)
   if not api.nvim_buf_is_valid(messageBuffer) then
     notifyError('Invalid message buffer')
     return
@@ -34,9 +37,19 @@ local function tryCommit(messageBuffer, gitDir)
     return false
   end
 
+  local command = {'git', 'commit', '-m', title, '-m', description}
+
+  if opts.amend then
+    command[#command + 1] = '--amend'
+  end
+
+  if true == opts.resetAuthor then
+    command[#command + 1] = '--reset-author'
+  end
+
   vim.system(
-    {'git', 'commit', '-m', title, '-m', description},
-    {text = true, cwd = gitDir},
+    command,
+    {text = true, cwd = opts.gitDir},
     vim.schedule_wrap(function (obj)
       if #obj.stderr > 0 then
         notifyError(obj.stderr)
@@ -66,22 +79,20 @@ local function getCommitMessagePath(gitDir)
   return vim.fs.joinpath(absoluteGitDir(gitDir), 'COMMIT_EDITMSG')
 end
 
-local function displayCommitMessage(gitDir, confirmKey, content)
-  local commitMessagePath = getCommitMessagePath(gitDir)
+local function displayCommitMessage(opts, content)
+  local commitMessagePath = getCommitMessagePath(opts.gitDir)
   local messageBuffer = vim.fn.bufadd(commitMessagePath)
 
   local bufDelete = api.nvim_create_autocmd('BufDelete', {
     buffer = messageBuffer,
     callback = function ()
-      tryCommit(messageBuffer, gitDir)
+      tryCommit(messageBuffer, opts)
     end,
   })
 
-  confirmKey = confirmKey or '<A-CR>'
-
-  vim.keymap.set({'n', 'i'}, confirmKey, function ()
+  vim.keymap.set({'n', 'i'}, opts.confirmKey, function ()
     api.nvim_del_autocmd(bufDelete)
-    tryCommit(messageBuffer, gitDir)
+    tryCommit(messageBuffer, opts)
   end, {buffer = messageBuffer})
 
   if content.title then
@@ -110,33 +121,42 @@ local function displayCommitMessage(gitDir, confirmKey, content)
   vim.cmd.edit()
 end
 
+---@param opts git-utils.commit.opts
 local function prepareCommitView(opts)
   opts = opts or {}
-  local gitDir = opts.gitDir or vim.uv.cwd()
+  opts.gitDir = opts.gitDir or vim.uv.cwd()
+  opts.confirmKey = opts.confirmKey or '<A-CR>'
 
-  local commitMessagePath = getCommitMessagePath(gitDir)
-  local oldMessageBuffer = vim.fn.bufadd(commitMessagePath)
-  local title, description = parseMessageBuffer(oldMessageBuffer)
+  local command = {'git', 'commit'}
+
+  if opts.amend then
+    command[#command + 1] = '--amend'
+  end
 
   vim.system(
-    {'git', 'commit'},
+    command,
     {
       text = true,
-      env = {GIT_EDITOR = 'cat'},
-      cwd = gitDir,
+      env = {GIT_EDITOR = 'false'},
+      cwd = opts.gitDir,
     },
     vim.schedule_wrap(function (obj)
       if 0 == #vim.trim(obj.stderr) then
         vim.print('Nothing to commit yet')
         return
       end
-      displayCommitMessage(gitDir, opts.confirmKey, {title = title, description = description})
+
+      local commitMessagePath = getCommitMessagePath(opts.gitDir)
+      local oldMessageBuffer = vim.fn.bufadd(commitMessagePath)
+      local title, description = parseMessageBuffer(oldMessageBuffer)
+      displayCommitMessage(opts, {title = title, description = description})
     end)
   )
 end
 
+--- @class git-utils.commit
 return setmetatable({}, {
-  __call = function (_, ...)
-    return prepareCommitView(...)
+  __call = function (_, opts)
+    return prepareCommitView(opts)
   end,
 })
