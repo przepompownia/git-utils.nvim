@@ -127,7 +127,7 @@ end
 local function prepareCommitView(opts)
   opts = opts or {}
   opts.gitDir = opts.gitDir or vim.uv.cwd()
-  opts.confirmKey = opts.confirmKey or '<A-CR>'
+  opts.confirmKey = opts.confirmKey or '<A-Bslash>'
 
   local command = {'git', 'commit'}
 
