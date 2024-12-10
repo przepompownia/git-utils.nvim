@@ -53,7 +53,7 @@ function git.push(relativeDir, remoteRepo)
 
     local out = table.concat(data, '\n')
     vim.schedule(function ()
-      vim.notify(('%-99s'):format(('%s: %s'):format(remoteRepo, out)), level, {title = 'git push'})
+      vim.notify(('%s: %s'):format(remoteRepo, out), level, {title = 'git push'})
     end)
   end
 
