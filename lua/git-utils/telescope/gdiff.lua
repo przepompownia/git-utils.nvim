@@ -1,12 +1,3 @@
-local finders = require 'telescope.finders'
-local conf = require('telescope.config').values
-local diff = require('git-utils.cmd.diff')
-local fromEntry = require 'telescope.from_entry'
-local makeEntry = require('telescope.make_entry')
-local bufferPreviewer = require('telescope.previewers.buffer_previewer')
-local sorters = require('telescope.sorters')
-local putils = require 'telescope.previewers.utils'
-
 local gdiff = {}
 
 ---@param command git-utils.cmd.diff
@@ -32,13 +23,14 @@ end
 ---@param command git-utils.cmd.diff
 ---@return table
 local function previewer(opts, command)
-  return bufferPreviewer.new_buffer_previewer {
+  return require('telescope.previewers.buffer_previewer').new_buffer_previewer {
     title = 'Grep git diff Preview',
     get_buffer_by_name = function (_, entry) return entry.value end,
 
     define_preview = function (self, entry, _status)
+      local conf = require('telescope.config').values
       if entry.status and (entry.status == '??' or entry.status == 'A ') then
-        local p = fromEntry.path(entry, true)
+        local p = require('telescope.from_entry').path(entry, true)
         if p == nil or p == '' then return end
         conf.buffer_previewer_maker(p, self.state.bufnr, {
           bufname = self.state.bufname,
@@ -48,6 +40,9 @@ local function previewer(opts, command)
         local newCommand = command:clone()
         newCommand:switchNamesOnly()
         newCommand:appendArgument(entry.value)
+
+        local putils = require('telescope.previewers.utils')
+
         putils.job_maker(newCommand, self.state.bufnr, {
           value = entry.value,
           bufname = self.state.bufname,
@@ -66,16 +61,16 @@ function gdiff.run(opts)
     opts.args = {opts.args}
   end
 
-  local command = diff:newCommand('GDiff', opts.args, opts.cwd or vim.uv.cwd())
+  local command = require('git-utils.cmd.diff'):newCommand('GDiff', opts.args, opts.cwd or vim.uv.cwd())
 
   opts = opts or {}
   require('telescope.pickers').new(opts, {
     prompt_title = 'GDiff',
-    finder = finders.new_dynamic({
+    finder = require('telescope.finders').new_dynamic({
       fn = makeRequest(command),
-      entry_maker = makeEntry.gen_from_file(opts),
+      entry_maker = require('telescope.make_entry').gen_from_file(opts),
     }),
-    sorter = sorters.empty(),
+    sorter = require('telescope.sorters').empty(),
     previewer = previewer(opts, command),
   }):find()
 end
