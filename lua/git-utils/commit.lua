@@ -3,7 +3,7 @@ local api = vim.api
 --- @alias git-utils.commit.opts {confirmKey: string, gitDir: string, amend: boolean, resetAuthor: boolean}
 
 local function notify(msg, level)
-  vim.notify(vim.trim(msg), level, {title = 'git commit'})
+  vim.notify(vim.trim(msg), level)
 end
 
 local function notifyError(msg)

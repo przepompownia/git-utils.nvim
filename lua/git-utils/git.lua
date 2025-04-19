@@ -29,7 +29,7 @@ function git.top(relativeDir)
   local out = vim.system({'git', 'rev-parse', '--show-toplevel'}, {cwd = relativeDir}):wait()
 
   if out.code > 0 then
-    vim.notify(('Cannot determine top level directory for %s'):format(relativeDir), vim.log.levels.WARN, {title = 'git'})
+    vim.notify(('Cannot determine top level directory for %s'):format(relativeDir), vim.log.levels.WARN)
 
     return relativeDir
   end
@@ -53,7 +53,7 @@ function git.push(relativeDir, remoteRepo)
 
     local out = table.concat(data, '\n')
     vim.schedule(function ()
-      vim.notify(('%s: %s'):format(remoteRepo, out), level, {title = 'git push'})
+      vim.notify(('%s: %s'):format(remoteRepo, out), level)
     end)
   end
 
@@ -223,7 +223,7 @@ function git.switchToBranch(branch, cwd, _noHooks)
   local _stdout, exitCode, stderr = require('telescope.utils').get_os_command_output(cmd, cwd)
 
   if {} ~= stderr then
-    vim.notify(table.concat(stderr, '\n'), vim.log.levels.INFO, {title = 'git switch'})
+    vim.notify(table.concat(stderr, '\n'), vim.log.levels.INFO)
   end
 
   if 0 ~= exitCode then
