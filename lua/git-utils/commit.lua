@@ -120,7 +120,7 @@ local function displayCommitMessage(opts, content)
   })
 
   vim.cmd.normal('gg')
-  vim.cmd.edit()
+  xpcall(vim.cmd.edit, function (e) api.nvim_echo({{e}}, true, {err = true}) end)
 end
 
 ---@param opts git-utils.commit.opts
